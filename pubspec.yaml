@@ -1,27 +1,33 @@
 name: leave_manager
-description: Leave management app with Arabic UI, approvals, FCM, CSV export, and dashboard
+description: تطبيق مدير الإجازات - واجهة عربية + صلاحيات
 publish_to: "none"
-version: 1.2.0+1
+version: 1.0.0+1
 
 environment:
-  sdk: ">=3.4.0 <4.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.4.4
-  firebase_messaging: ^15.0.3
-  flutter_local_notifications: ^17.2.3
-  provider: ^6.1.2
+  cupertino_icons: ^1.0.6
+
+  # Firebase (اختياري للتشغيل لاحقا)
+  firebase_core: ^3.5.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+  firebase_messaging: ^15.0.0
+
+  # حزم إضافية
   intl: ^0.19.0
   csv: ^6.0.0
-  share_plus: ^10.0.2
-  path_provider: ^2.1.3
-  permission_handler: ^11.3.1
-  google_fonts: ^6.2.1
+  url_launcher: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/

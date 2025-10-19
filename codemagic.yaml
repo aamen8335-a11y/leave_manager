@@ -4,20 +4,13 @@ workflows:
     max_build_duration: 60
     environment:
       flutter: stable
-      vars:
-        PACKAGE_NAME: "com.company.leave"
     scripts:
-      - name: Prepare project
+      - name: Generate android folder if missing
         script: |
-          flutter --version
           flutter pub get
           flutter create .
-      - name: Build APK
+      - name: Build APK (release)
         script: |
           flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
-    publishing:
-      email:
-        recipients:
-          - aamen8335@gmail.com
