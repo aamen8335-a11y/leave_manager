@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function myRole() { return userDoc().data.role; }
+    function myTeam() { return userDoc().data.teamId; }
+    function myDept() { return userDoc().data.department; }
+    function isCompanyAdmin() { return userDoc().data.isCompanyAdmin == true || myRole() == 'admin'; }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (userId == request.auth.uid || isCompanyAdmin());
+      allow write: if isSignedIn() && (userId == request.auth.uid || isCompanyAdmin());
+    }
+
+    match /leave_requests/{id} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        (myRole() == 'team_leader' && resource.data.teamId == myTeam()) ||
+        (myRole() == 'supervisor' && resource.data.department == myDept()) ||
+        isCompanyAdmin()
+      );
+
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        ((myRole() == 'team_leader' && resource.data.teamId == myTeam()) ||
+         (myRole() == 'supervisor' && resource.data.department == myDept()) ||
+         isCompanyAdmin())
+      );
+
+      allow delete: if false;
+    }
+  }
+}
