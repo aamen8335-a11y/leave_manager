@@ -1,137 +1,122 @@
 import 'package:flutter/material.dart';
-// Firebase مبدئيًا إيقاف التهيئة حتى تُضيف google-services.json لاحقًا
-// import 'package:firebase_core/firebase_core.dart';
+import 'dart:ui' as ui;
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // حاول تُفعّل السطرين دول بعد إضافة Firebase:
-  // await Firebase.initializeApp();
-  runApp(const LeaveApp());
+  runApp(const LeaveManagerApp());
 }
 
-class LeaveApp extends StatelessWidget {
-  const LeaveApp({super.key});
-
+class LeaveManagerApp extends StatefulWidget {
+  const LeaveManagerApp({Key? key}) : super(key: key);
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'sans',
-      ),
-      locale: const Locale('ar'),
-      home: const HomeScreen(),
-    );
+  State<LeaveManagerApp> createState() => _LeaveManagerAppState();
+}
+
+class _LeaveManagerAppState extends State<LeaveManagerApp> {
+  Locale _locale = const Locale('ar'); // افتراضي عربي
+  void _toggleLocale() {
+    setState(() {
+      _locale = _locale.languageCode == 'ar' ? const Locale('en') : const Locale('ar');
+    });
   }
-}
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _index = 0;
-  final pages = const [RequestsPage(), ApprovalsPage(), DashboardPage(), SettingsPage()];
   @override
   Widget build(BuildContext context) {
+    final isArabic = _locale.languageCode == 'ar';
+    final txtDir = isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr;
+
     return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('مدير الإجازات')),
-        body: pages[_index],
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i)=>setState(()=>_index=i),
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.post_add_outlined), label: 'طلب إجازة'),
-            NavigationDestination(icon: Icon(Icons.verified_outlined), label: 'الموافقات'),
-            NavigationDestination(icon: Icon(Icons.pie_chart_outline), label: 'لوحة التحكم'),
-            NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'الإعدادات'),
-          ],
+      textDirection: txtDir,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        locale: _locale,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4)),
+          useMaterial3: true,
         ),
-        floatingActionButton: _index==0? FloatingActionButton.extended(
-          onPressed: (){},
-          icon: const Icon(Icons.add),
-          label: const Text('طلب جديد'),
-        ):null,
+        home: HomeScreen(onToggleLocale: _toggleLocale, isArabic: isArabic),
       ),
     );
   }
 }
 
-class RequestsPage extends StatelessWidget{
-  const RequestsPage({super.key});
+class HomeScreen extends StatelessWidget {
+  final VoidCallback onToggleLocale;
+  final bool isArabic;
+  const HomeScreen({super.key, required this.onToggleLocale, required this.isArabic});
+
   @override
-  Widget build(BuildContext context){
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text('أنواع الإجازة', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8, runSpacing: 8,
-          children: const [
-            Chip(label: Text('سنوية')), Chip(label: Text('مرضية')), Chip(label: Text('بدون راتب')), Chip(label: Text('أخرى'))
-          ],
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton.icon(onPressed: (){}, icon: const Icon(Icons.upload_file), label: const Text('تصدير تقرير CSV')),
-        const SizedBox(height: 16),
-        Card(
-          child: ListTile(
-            title: const Text('مثال: طلب إجازة سنوية'),
-            subtitle: const Text('من 2025-10-21 إلى 2025-10-25 • 5 أيام'),
-            trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: (){}),
-          ),
-        ),
-      ],
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isArabic ? 'مدير الإجازات' : 'Leave Manager'),
+        actions: [
+          IconButton(icon: const Icon(Icons.language),
+            tooltip: isArabic ? 'تبديل اللغة' : 'Switch language',
+            onPressed: onToggleLocale),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _tile(context, isArabic ? 'تسجيل الدخول' : 'Login',
+              isArabic ? 'ادخل بحسابك' : 'Sign in', Icons.login, const LoginScreen()),
+          _gap(),
+          _tile(context, isArabic ? 'طلب إجازة' : 'Request Leave',
+              isArabic ? 'أرسل طلبًا جديدًا' : 'Send new request',
+              Icons.event_available, const RequestScreen()),
+          _gap(),
+          _tile(context, isArabic ? 'لوحة القيادة' : 'Dashboard',
+              isArabic ? 'مراجعة الطلبات' : 'Review requests',
+              Icons.dashboard, const DashboardScreen()),
+          _gap(),
+          _tile(context, isArabic ? 'التقارير (CSV)' : 'Reports (CSV)',
+              isArabic ? 'تصدير تقرير شهري' : 'Export monthly CSV',
+              Icons.file_download, const ReportScreen()),
+        ],
+      ),
+    );
+  }
+
+  SizedBox _gap() => const SizedBox(height: 12);
+
+  Card _tile(BuildContext c, String title, String sub, IconData ic, Widget page) {
+    return Card(
+      child: ListTile(
+        title: Text(title),
+        subtitle: Text(sub),
+        trailing: Icon(ic),
+        onTap: () => Navigator.of(c).push(MaterialPageRoute(builder: (_) => page)),
+      ),
     );
   }
 }
 
-class ApprovalsPage extends StatelessWidget{
-  const ApprovalsPage({super.key});
+/// شاشات مبدئية — تقدر تبدّلها لاحقًا
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
   @override
-  Widget build(BuildContext context){
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        ListTile(
-          leading: CircleAvatar(child: Text('أ')),
-          title: Text('طلب إجازة: أحمد سعيد'),
-          subtitle: Text('نوع: سنوية • 3 أيام'),
-          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.clear, color: Colors.red),
-            SizedBox(width: 8),
-            Icon(Icons.check_circle, color: Colors.green),
-          ]),
-        )
-      ],
-    );
-  }
+  Widget build(BuildContext context) => _scaffold(context, 'تسجيل الدخول / Login', 'نموذج تسجيل الدخول');
 }
 
-class DashboardPage extends StatelessWidget{
-  const DashboardPage({super.key});
+class RequestScreen extends StatelessWidget {
+  const RequestScreen({super.key});
   @override
-  Widget build(BuildContext context){
-    return Center(child: Text('إحصائيات الشهر • إجمالي الطلبات: 12 • الموافق عليها: 9 • المرفوضة: 3'));
-  }
+  Widget build(BuildContext context) => _scaffold(context, 'طلب إجازة / Leave Request', 'نموذج طلب الإجازة');
 }
 
-class SettingsPage extends StatelessWidget{
-  const SettingsPage({super.key});
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
   @override
-  Widget build(BuildContext context){
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        ListTile(title: Text('الشيفتات الأسبوعية: صباحي / مسائي / ليلي')),
-        ListTile(title: Text('إدارة الصلاحيات: 12 تيم ليدر • 5 مشرفين • 5 مشرفين صلاحيات أدمن')),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => _scaffold(context, 'لوحة القيادة / Dashboard', 'قائمة الطلبات للموافقة');
+}
+
+class ReportScreen extends StatelessWidget {
+  const ReportScreen({super.key});
+  @override
+  Widget build(BuildContext context) => _scaffold(context, 'التقارير / Reports', 'تصدير CSV الشهري');
+}
+
+Widget _scaffold(BuildContext c, String title, String body) {
+  return Scaffold(appBar: AppBar(title: Text(title)), body: Center(child: Text(body)));
 }
