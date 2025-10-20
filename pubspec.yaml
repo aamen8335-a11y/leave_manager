@@ -1,5 +1,5 @@
 name: leave_manager
-description: تطبيق مدير الإجازات لإدارة طلبات الموظفين والموافقات
+description: تطبيق مدير الإجازات لطلبات الموظفين والموافقات
 publish_to: "none"
 
 environment:
