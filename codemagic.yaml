@@ -4,20 +4,17 @@ workflows:
     max_build_duration: 60
     environment:
       flutter: stable
-
     scripts:
-      - name: Generate android folder if missing
+      - name: Generate android folder only if missing
         script: |
-          flutter pub get
           if [ ! -d "android" ]; then
             flutter create . --platforms=android
-          else
-            echo "Android folder exists; skipping flutter create"
           fi
-
+      - name: Get dependencies
+        script: |
+          flutter pub get
       - name: Build APK (release)
         script: |
           flutter build apk --release
-
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
